@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id              String    @id @default(uuid())
+  nombre          String
+  telefono        String?
+  instagram_id    String?   @unique
+  whatsapp_id     String?   @unique
+  idioma          String    @default("es")
+  zona_horaria    String    @default("America/Mexico_City")
+  preferencias    Json?
+  consentimiento  Boolean   @default(false)
+  consentimiento_at DateTime?
+  tags            String[]
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  conversations   Conversation[]
+  appointments    AppointmentLog[]
+
+  @@map("clients")
+}
+
+enum Channel {
+  WHATSAPP
+  INSTAGRAM
+}
+
+enum ConversationState {
+  NEW
+  NEED_INTENT
+  NEED_SERVICE
+  NEED_DATE_PREF
+  FETCHING_AVAILABILITY
+  PROPOSE_SLOTS
+  NEED_CONFIRM_SLOT
+  BOOKING
+  BOOKED
+  HANDOFF
+}
+
+model Conversation {
+  id                 String            @id @default(uuid())
+  channel            Channel
+  external_thread_id String
+  state              ConversationState @default(NEW)
+  last_intent        String?
+  last_seen_at       DateTime          @default(now())
+  client_id          String
+  created_at         DateTime          @default(now())
+  updated_at         DateTime          @updatedAt
+
+  client             Client            @relation(fields: [client_id], references: [id])
+  messages           Message[]
+  handoffs           Handoff[]
+
+  @@unique([channel, external_thread_id])
+  @@map("conversations")
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+model Message {
+  id               String           @id @default(uuid())
+  conversation_id  String
+  direction        MessageDirection
+  text             String
+  raw_payload_json Json?
+  created_at       DateTime         @default(now())
+
+  conversation     Conversation     @relation(fields: [conversation_id], references: [id])
+
+  @@map("messages")
+}
+
+model KnowledgeBase {
+  key        String   @id
+  value      String
+  updated_at DateTime @updatedAt
+
+  @@map("knowledge_base")
+}
+
+enum HandoffStatus {
+  OPEN
+  CLOSED
+}
+
+model Handoff {
+  id              String        @id @default(uuid())
+  conversation_id String
+  reason          String
+  status          HandoffStatus @default(OPEN)
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @updatedAt
+
+  conversation    Conversation  @relation(fields: [conversation_id], references: [id])
+
+  @@map("handoffs")
+}
+
+model AppointmentLog {
+  id                   String   @id @default(uuid())
+  simplybook_booking_id String  @unique
+  client_id            String
+  service_id           String
+  staff_id             String?
+  start_at             DateTime
+  end_at               DateTime
+  status               String
+  created_at           DateTime @default(now())
+
+  client               Client   @relation(fields: [client_id], references: [id])
+
+  @@map("appointments_log")
+}
