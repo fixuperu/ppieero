@@ -1,19 +1,43 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { createClient } from '@supabase/supabase-js';
 import { config } from '../config/index.js';
 import { prisma } from '../lib/prisma.js';
 
-// Admin API key middleware
-async function verifyAdminKey(request: FastifyRequest, reply: FastifyReply) {
-  const apiKey = request.headers['x-admin-key'];
+// Verify Supabase JWT token middleware
+async function verifyJWT(request: FastifyRequest, reply: FastifyReply) {
+  const authHeader = request.headers.authorization;
   
-  if (!apiKey || apiKey !== config.adminApiKey) {
-    return reply.status(401).send({ error: 'Unauthorized' });
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return reply.status(401).send({ error: 'Missing or invalid authorization header' });
+  }
+
+  const token = authHeader.substring(7);
+  
+  try {
+    // Create Supabase client and verify the token
+    const supabase = createClient(config.supabase.url, config.supabase.jwtSecret, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      }
+    });
+
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+
+    if (error || !user) {
+      return reply.status(401).send({ error: 'Invalid or expired token' });
+    }
+
+    // Attach user to request for downstream use
+    (request as any).user = user;
+  } catch (error) {
+    return reply.status(401).send({ error: 'Token verification failed' });
   }
 }
 
 export async function adminRoutes(fastify: FastifyInstance) {
-  // Apply admin key verification to all routes
-  fastify.addHook('preHandler', verifyAdminKey);
+  // Apply JWT verification to all routes
+  fastify.addHook('preHandler', verifyJWT);
 
   // GET /admin/clients - List all clients
   fastify.get('/clients', async (request, reply) => {
