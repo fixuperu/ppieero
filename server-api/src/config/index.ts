@@ -6,8 +6,11 @@ export const config = {
   host: process.env.HOST || '0.0.0.0',
   nodeEnv: process.env.NODE_ENV || 'development',
 
-  // Admin API
-  adminApiKey: process.env.ADMIN_API_KEY || '',
+  // Supabase JWT verification
+  supabase: {
+    url: process.env.SUPABASE_URL || '',
+    jwtSecret: process.env.SUPABASE_JWT_SECRET || '',
+  },
 
   // Webhook
   webhookVerifyToken: process.env.WEBHOOK_VERIFY_TOKEN || '',

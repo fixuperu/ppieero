@@ -1,6 +1,24 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import crypto from 'crypto';
 import { config } from '../config/index.js';
 import { handleIncomingMessage } from '../modules/channels/handler.js';
+
+// Verify Meta webhook signature using HMAC-SHA256
+function verifyMetaSignature(payload: string, signature: string | undefined, appSecret: string): boolean {
+  if (!signature || !appSecret) {
+    return false;
+  }
+
+  const expectedSignature = 'sha256=' + crypto
+    .createHmac('sha256', appSecret)
+    .update(payload)
+    .digest('hex');
+
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expectedSignature)
+  );
+}
 
 export async function webhookRoutes(fastify: FastifyInstance) {
   // GET - Webhook verification for Meta
@@ -25,7 +43,23 @@ export async function webhookRoutes(fastify: FastifyInstance) {
   });
 
   // POST - Receive messages from Meta (WhatsApp & Instagram)
-  fastify.post('/meta', async (request: FastifyRequest, reply: FastifyReply) => {
+  // Includes signature verification to prevent spoofed requests
+  fastify.post('/meta', {
+    config: {
+      rawBody: true // Required for signature verification
+    }
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const signature = request.headers['x-hub-signature-256'] as string | undefined;
+    const rawBody = (request as any).rawBody || JSON.stringify(request.body);
+    
+    // Verify signature with app secret (use Instagram app secret as it's shared for Meta webhooks)
+    const appSecret = config.instagram.appSecret;
+    
+    if (!verifyMetaSignature(rawBody, signature, appSecret)) {
+      fastify.log.warn('Invalid webhook signature - request rejected');
+      return reply.status(403).send({ error: 'Invalid signature' });
+    }
+
     const body = request.body as any;
 
     try {

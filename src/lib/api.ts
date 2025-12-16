@@ -1,15 +1,27 @@
 // API client for connecting to your Node.js/Fastify backend
-// Replace BASE_URL with your actual backend URL
+// Uses Supabase JWT tokens for authentication instead of static API keys
+
+import { supabase } from '@/integrations/supabase/client';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-const ADMIN_KEY = import.meta.env.VITE_ADMIN_API_KEY || '';
+
+async function getAuthToken(): Promise<string | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ?? null;
+}
 
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const token = await getAuthToken();
+  
+  if (!token) {
+    throw new Error('Authentication required. Please log in.');
+  }
+
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      'x-admin-key': ADMIN_KEY,
+      'Authorization': `Bearer ${token}`,
       ...options.headers,
     },
   });
