@@ -14,7 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          admin_api_key: string | null
+          api_base_url: string | null
+          created_at: string | null
+          id: string
+          instagram_app_id: string | null
+          instagram_app_secret: string | null
+          instagram_page_access_token: string | null
+          simplybook_api_key: string | null
+          simplybook_company: string | null
+          simplybook_mock_mode: boolean | null
+          simplybook_secret_key: string | null
+          updated_at: string | null
+          user_id: string
+          webhook_verify_token: string | null
+          whatsapp_business_account_id: string | null
+          whatsapp_phone_number_id: string | null
+          whatsapp_token: string | null
+        }
+        Insert: {
+          admin_api_key?: string | null
+          api_base_url?: string | null
+          created_at?: string | null
+          id?: string
+          instagram_app_id?: string | null
+          instagram_app_secret?: string | null
+          instagram_page_access_token?: string | null
+          simplybook_api_key?: string | null
+          simplybook_company?: string | null
+          simplybook_mock_mode?: boolean | null
+          simplybook_secret_key?: string | null
+          updated_at?: string | null
+          user_id: string
+          webhook_verify_token?: string | null
+          whatsapp_business_account_id?: string | null
+          whatsapp_phone_number_id?: string | null
+          whatsapp_token?: string | null
+        }
+        Update: {
+          admin_api_key?: string | null
+          api_base_url?: string | null
+          created_at?: string | null
+          id?: string
+          instagram_app_id?: string | null
+          instagram_app_secret?: string | null
+          instagram_page_access_token?: string | null
+          simplybook_api_key?: string | null
+          simplybook_company?: string | null
+          simplybook_mock_mode?: boolean | null
+          simplybook_secret_key?: string | null
+          updated_at?: string | null
+          user_id?: string
+          webhook_verify_token?: string | null
+          whatsapp_business_account_id?: string | null
+          whatsapp_phone_number_id?: string | null
+          whatsapp_token?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
