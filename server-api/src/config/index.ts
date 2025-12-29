@@ -6,11 +6,8 @@ export const config = {
   host: process.env.HOST || '0.0.0.0',
   nodeEnv: process.env.NODE_ENV || 'development',
 
-  // Supabase JWT verification
-  supabase: {
-    url: process.env.SUPABASE_URL || '',
-    jwtSecret: process.env.SUPABASE_JWT_SECRET || '',
-  },
+  // JWT Secret for self-hosted auth
+  jwtSecret: process.env.JWT_SECRET || 'change-this-secret-in-production',
 
   // Webhook
   webhookVerifyToken: process.env.WEBHOOK_VERIFY_TOKEN || '',

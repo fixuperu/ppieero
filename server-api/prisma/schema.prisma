@@ -7,6 +7,59 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============= Auth & User Management =============
+
+model User {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  password   String   // bcrypt hashed
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  profile  Profile?
+  settings Settings?
+
+  @@map("users")
+}
+
+model Profile {
+  id         String   @id @default(uuid())
+  user_id    String   @unique
+  email      String?
+  full_name  String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Settings {
+  id                         String   @id @default(uuid())
+  user_id                    String   @unique
+  api_base_url               String?  @default("http://localhost:3000")
+  webhook_verify_token       String?
+  whatsapp_token             String?
+  whatsapp_phone_number_id   String?
+  whatsapp_business_account_id String?
+  instagram_page_access_token String?
+  instagram_app_id           String?
+  instagram_app_secret       String?
+  simplybook_company         String?
+  simplybook_api_key         String?
+  simplybook_secret_key      String?
+  simplybook_mock_mode       Boolean  @default(true)
+  created_at                 DateTime @default(now())
+  updated_at                 DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("settings")
+}
+
+// ============= Client & Conversations =============
+
 model Client {
   id              String    @id @default(uuid())
   nombre          String

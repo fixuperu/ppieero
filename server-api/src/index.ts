@@ -4,6 +4,7 @@ import { config } from './config/index.js';
 import { logger } from './lib/logger.js';
 import { webhookRoutes } from './routes/webhooks.js';
 import { adminRoutes } from './routes/admin.js';
+import { authRoutes } from './routes/auth.js';
 
 const fastify = Fastify({
   logger: logger,
@@ -18,6 +19,7 @@ async function start() {
     });
 
     // Register routes
+    await fastify.register(authRoutes);
     await fastify.register(webhookRoutes, { prefix: '/webhooks' });
     await fastify.register(adminRoutes, { prefix: '/admin' });
 
