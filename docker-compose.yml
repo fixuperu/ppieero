@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: omnibooking-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-omnibooking}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_DB: ${DB_NAME:-omnibooking}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-omnibooking}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  api:
+    build:
+      context: ./server-api
+      dockerfile: Dockerfile
+    container_name: omnibooking-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://${DB_USER:-omnibooking}:${DB_PASSWORD:-changeme}@db:5432/${DB_NAME:-omnibooking}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-me}
+      WEBHOOK_VERIFY_TOKEN: ${WEBHOOK_VERIFY_TOKEN:-your-webhook-token}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+      WHATSAPP_BUSINESS_ACCOUNT_ID: ${WHATSAPP_BUSINESS_ACCOUNT_ID:-}
+      INSTAGRAM_PAGE_ACCESS_TOKEN: ${INSTAGRAM_PAGE_ACCESS_TOKEN:-}
+      INSTAGRAM_APP_ID: ${INSTAGRAM_APP_ID:-}
+      INSTAGRAM_APP_SECRET: ${INSTAGRAM_APP_SECRET:-}
+      SIMPLYBOOK_COMPANY: ${SIMPLYBOOK_COMPANY:-}
+      SIMPLYBOOK_API_KEY: ${SIMPLYBOOK_API_KEY:-}
+      SIMPLYBOOK_SECRET_KEY: ${SIMPLYBOOK_SECRET_KEY:-}
+      SIMPLYBOOK_MOCK: ${SIMPLYBOOK_MOCK:-true}
+    ports:
+      - "3000:3000"
+
+  # Frontend (Nginx serving static files)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: omnibooking-frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+    environment:
+      API_URL: http://api:3000
+
+volumes:
+  postgres_data:
